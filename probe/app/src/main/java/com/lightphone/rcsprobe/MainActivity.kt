@@ -139,6 +139,23 @@ class MainActivity : Activity() {
                     try { line("ProvisioningManager.${m.name}() -> ${m.invoke(pm)}") }
                     catch (t: Throwable) { line("ProvisioningManager.${m.name}() FAILED: ${t.cause ?: t}") }
                 }
+                // C2 experiment: can a platform-signed app WRITE provisioning state?
+                for (cap in 0..3) {
+                    try {
+                        val get = prov.methods.first { it.name == "getRcsProvisioningStatusForCapability" }
+                        line("getRcsProvisioningStatusForCapability($cap) -> ${get.invoke(pm, cap)}")
+                    } catch (t: Throwable) {
+                        line("getRcsProvisioningStatusForCapability($cap) FAILED: ${t.cause ?: t}")
+                    }
+                    try {
+                        val set = prov.methods.first { it.name == "setRcsProvisioningStatusForCapability" }
+                        set.invoke(pm, cap, true)
+                        line("setRcsProvisioningStatusForCapability($cap, true) invoked OK")
+                    } catch (t: Throwable) {
+                        line("setRcsProvisioningStatusForCapability($cap, true) FAILED: ${t.cause ?: t}")
+                        break
+                    }
+                }
             } catch (t: Throwable) {
                 line("ProvisioningManager.createForSubscriptionId FAILED: ${t.cause ?: t}")
             }

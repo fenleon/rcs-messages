@@ -92,10 +92,11 @@ SYSTEM_SHELL role, or a carrier-config change.**
   ready to be pointed at the QTI ImsRcsService from inside `com.lightos` or a
   Light-signed tool.
 - **An open integration question**: persistent enablement. Shell overrides do
-  not survive reboot; on a Light-controlled build, either carrier provisioning
-  or a boot-time enablement path (system app with `PERFORM_IMS_SINGLE_REGISTRATION`
-  can call `ProvisioningManager.setRcsProvisioningStatusForCapability`... to be
-  validated) replaces the shell sequence entirely.
+  not survive reboot. **Measured: `ProvisioningManager.setRcsProvisioningStatusForCapability`
+  is denied even to a platform-signed priv-app — provisioning writes require
+  carrier privileges specifically.** On a Light-controlled build the remaining
+  paths are a build-level enablement patch, carrier config, or SIM ARA-M
+  provisioning — all Light/Telekom side.
 
 ## 5. Suggested next steps together
 
