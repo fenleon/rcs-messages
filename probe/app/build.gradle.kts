@@ -12,6 +12,21 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
+    // Emulator-only: platform (AOSP testkey) signing for INTERNAL-protection
+    // RCS permission experiments. The keystore is local (gitignored); public
+    // builds fall back to debug signing.
+    val platformKeystore = file("keys/platform.jks")
+    if (platformKeystore.exists()) {
+        signingConfigs {
+            create("platform") {
+                storeFile = platformKeystore
+                storePassword = "android"
+                keyAlias = "platform"
+                keyPassword = "android"
+            }
+        }
+        buildTypes.all { signingConfig = signingConfigs.getByName("platform") }
+    }
     kotlin {
         compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17 }
     }
