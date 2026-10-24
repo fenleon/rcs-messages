@@ -36,6 +36,7 @@ import com.lightphone.rcsmessages.Snapshots
 import com.lightphone.rcsmessages.contactIdentifier
 import com.lightphone.rcsmessages.formatRelativeTimestamp
 import com.lightphone.rcsmessages.server.MatrixRepository
+import com.lightphone.rcsmessages.server.RcsEngine
 import com.thelightphone.sdk.InitialScreen
 import com.thelightphone.sdk.LightScreen
 import com.thelightphone.sdk.LightViewModel
@@ -354,6 +355,7 @@ class ChatListScreen(sealedActivity: SealedLightActivity) :
             // clipboard bind + MatrixRepository.init — idempotent, the screen
             // is recreated on back navigation, the process is not.
             ChatClient.bootstrap(lightContext)
+            RcsEngine.start(lightContext.androidContext)
             it.seedRoomsFromSnapshot(lightContext.filesDir)
         }
 
@@ -572,7 +574,9 @@ class ChatListScreen(sealedActivity: SealedLightActivity) :
                                     if (connection?.state == "offline") {
                                         "Sign in again — open Settings."
                                     } else {
-                                        "No account. Open Settings to sign in with Beeper or a Matrix homeserver."
+                                        // RCS engine seam: registration state replaces
+                                        // the Matrix sign-in hint (engine swap in progress).
+                                        "RCS: ${RcsEngine.registrationState.value}"
                                     },
                                 )
                                 connecting -> StatusText(LOADING_TEXT)

@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
+alias(libs.plugins.android.library) apply false
 }
 
 // SDK build properties, matching the light-sdk repo's root build.gradle.kts —

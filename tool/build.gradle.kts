@@ -141,6 +141,7 @@ dependencies {
     // fold, 2026-10): everything moved in-process behind the tool's
     // SealedLightContext — no LightSdkService, no embedded server.
     implementation(libs.kotlinx.coroutines)
+    implementation(project(":server"))
 
     // Trixnity Matrix SDK (the protocol layer: login/sync, room repositories, media).
     // Version pair proven by the Beeper4LightOS bootstrap on LightOS (see chats/PLAN.md).

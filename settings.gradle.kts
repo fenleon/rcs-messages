@@ -23,6 +23,7 @@ dependencyResolutionManagement {
 rootProject.name = "rcs-messages"
 
 include(":tool")
+include(":server")
 
 // Single-module tool (the tasks/passes pattern): `:tool` is the real LightOS
 // tool (lighttool.toml + light-sdk tool plugin, LightScreen UI). The RCS
