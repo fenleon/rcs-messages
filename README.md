@@ -11,10 +11,11 @@ system); the RCS client layer is new code.
 
 ## Locked decisions
 
-- Built-in Light Messages is stock AOSP MMS (`com.android.mms` priv-app);
+- Built-in **Phone** tool = React Native inside the `com.lightos` system app
+  (klinker android-smsmms native module, SMS/MMS only — code-verified, no RCS).
   RCS lives only here. No SMS fallback in v1. Light is pursuing LP3 RCS in
-  parallel — findings and code flow back to them; the built-in app may gain
-  RCS from Light itself later.
+  parallel — findings and code flow back to them; if Light adds RCS it will be
+  a native client inside `com.lightos` (same layer we build).
 - Client UI is always our own Kotlin (LightScreen, chats pattern) — never a
   third-party messaging UI.
 - Kotlin for tool and client layer; no SMS fallback in v1.
