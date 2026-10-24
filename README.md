@@ -11,7 +11,9 @@ system); the RCS client layer is new code.
 
 ## Locked decisions
 
-- Built-in Light Messages stays SMS/MMS-only; RCS lives only here.
+- Built-in Light Messages stays SMS/MMS-only; RCS lives only here. The
+  built-in Phone/Messages apps are untouchable — no overriding, extending, or
+  building on them; this tool is fully standalone.
 - Client UI is always our own Kotlin (LightScreen, chats pattern) — never a
   third-party messaging UI.
 - Kotlin for tool and client layer; no SMS fallback in v1.
