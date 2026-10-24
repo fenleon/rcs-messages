@@ -1,21 +1,49 @@
 [versions]
 agp = "8.12.3"
 kotlin = "2.3.20"
-kotlinx-coroutines = "1.10.2"
+compose-activity = "1.13.0"
+kotlinx-coroutines = "1.11.0"
+ktor = "3.5.2"
+room = "2.8.4"
+work = "2.10.0"
+trixnity = "5.8.0"
 sdk = "0.1.0"
+connector = "3.3.2"
 
 [libraries]
+compose-activity = { module = "androidx.activity:activity-compose", version.ref = "compose-activity" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
-# Consumed from the included ../light-phone/light-sdk build via dependencySubstitution;
+# Trixnity Matrix SDK — the companion's protocol layer (login/sync, Room repos, media).
+# Version pair proven by the Beeper4LightOS bootstrap (see chats/PLAN.md).
+trixnity-client = { module = "de.connect2x.trixnity:trixnity-client", version.ref = "trixnity" }
+trixnity-repository-room = { module = "de.connect2x.trixnity:trixnity-client-repository-room", version.ref = "trixnity" }
+trixnity-media-okio = { module = "de.connect2x.trixnity:trixnity-client-media-okio", version.ref = "trixnity" }
+# libOlm crypto driver (same pickle format as v4 — no crypto migration).
+trixnity-cryptodriver-libolm = { module = "de.connect2x.trixnity:trixnity-client-cryptodriver-libolm", version.ref = "trixnity" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+# Delivery backstop (Task: independent of the FGS/push failure modes) — plain
+# WorkManager in the unscanned :server library.
+androidx-work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
+# Consumed from the included ../light-sdk build via dependencySubstitution;
 # versions must match light-sdk/gradle.properties sdkGroup/sdkVersion.
 sdk-ui = { module = "com.thelightphone:sdk-ui", version.ref = "sdk" }
 sdk-client = { module = "com.thelightphone:sdk-client", version.ref = "sdk" }
 sdk-server = { module = "com.thelightphone:sdk-server", version.ref = "sdk" }
-sdk-shared = { module = "com.thelightphone:sdk-shared", version.ref = "sdk" }
+# UnifiedPush app-side connector (the SDK client depends on it too; needed here
+# directly for the probe service that captures LightOS's distributor endpoint).
+unifiedpush-connector = { module = "org.unifiedpush.android:connector", version.ref = "connector" }
+# kotlin-test (JUnit backend) — the only test framework the workspace allows.
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+junit = { module = "junit:junit", version = "4.13.2" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version = "2.3.6" }
+# Resolved from the included ../light-sdk build (no version).
 light-sdk = { id = "com.thelightphone.light-sdk" }

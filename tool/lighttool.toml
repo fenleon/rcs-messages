@@ -1,10 +1,17 @@
 [tool]
 id = "com.lightphone.rcsmessages"
 label = "RCS Messages"
-versionCode = 1
-versionName = "0.1.0"
-# Single-module tool (tasks/passes pattern): serverPackage = com.lightos on a
-# real LP3 (platform hosts the LightSdkService); flip to
-# com.thelightphone.sdk.emulator when testing on the emulator.
-serverPackage = "com.lightos"
+versionCode = 82
+versionName = "0.20.0"
+# ACCESS_NETWORK_STATE: the repository paces sync/media work off the live
+# connection state (LightConnectivity).
+permissions = ["android.permission.INTERNET", "android.permission.ACCESS_NETWORK_STATE", "android.permission.POST_NOTIFICATIONS", "android.permission.RECORD_AUDIO"]
+# Cleartext for LAN/self-hosted homeservers (10.x/192.168.x).
+capabilities = ["cleartext-http"]
+# Rung-1 fold (2026-10): no embedded server/companion — the tool talks to
+# LightOS (com.lightos) directly; the Matrix stack runs in-process and its
+# Trixnity Room store wants the larger heap.
+serverPackage = "com.thelightphone.sdk.emulator"
+# largeHeap: the Trixnity Room event store holds a full session in memory.
+largeHeap = true
 orientation = "portrait"

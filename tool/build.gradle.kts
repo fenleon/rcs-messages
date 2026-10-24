@@ -1,13 +1,50 @@
+val chatsR8Rules = File(buildDir, "chats-r8.pro").apply {
+    parentFile.mkdirs()
+    writeText(
+        """
+        # JNA — Trixnity's olm crypto wrapper loads libjnidispatch through JNA,
+        # which is reflection/JNI-heavy (field IDs looked up by name). R8 must
+        # not obfuscate or strip it, or E2EE login fails with:
+        #   UnsatisfiedLinkError: Can't obtain peer field ID for class com.sun.jna.Pointer
+        -keep class com.sun.jna.** { *; }
+        -dontwarn com.sun.jna.**
+
+        # Trixnity loads its olm crypto backend reflectively (optional engine) —
+        # without a keep, R8 strips it and session restore dies with:
+        #   NoClassDefFoundError: ...OlmLibraryWrapper (obfuscated as J5.d)
+        -keep class de.connect2x.trixnity.libolm.** { *; }
+
+        # Optional AndroidX window extensions (may be absent on some devices)
+        # and APIs not on the compile classpath.
+        -dontwarn androidx.window.**
+        """.trimIndent() + "\n",
+    )
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization) // durable push queue JSON (MatrixRepository QueuedPush)
     alias(libs.plugins.ksp)
     alias(libs.plugins.light.sdk)
 }
 
 android {
+    // Version-less fallbacks (rootProject.ext): inside this workspace the root
+    // build.gradle.kts doesn't declare them — the included ../light-sdk build
+    // does via its convention; in Light's Tool Library builder (which stages
+    // this tool/ into the baked-in SDK repo) the SDK's root declares them.
     compileSdk = rootProject.ext["compileSdk"] as Int
+
+    packaging {
+        // Netty (via the SDK's ktor stack) repeats these per-jar index files;
+        // the merger refuses duplicates without an exclude.
+        resources.excludes += setOf(
+            "META-INF/INDEX.LIST",
+            "META-INF/io.netty.versions.properties",
+        )
+    }
 
     signingConfigs {
         // Workspace dev signing (same key as the SDK tools/emulator). Inside
@@ -32,9 +69,28 @@ android {
         manifestPlaceholders["sdkVersion"] = property("sdkVersion") as String
     }
 
+    buildFeatures {
+        // MatrixRepository's verbose-log gate (BuildConfig.DEBUG && pref);
+        // the runtime pref stays the real off-switch (the LP3 runs DEBUGGABLE
+        // APKs — workspace AGENTS.md).
+        buildConfig = true
+    }
+
     buildTypes {
         getByName("debug") {
             signingConfig = signingConfigs.getByName("lightsdkDev")
+        }
+        getByName("release") {
+            isMinifyEnabled = true      // R8: dead-code elimination + obfuscation
+            isShrinkResources = true    // drop unused resources
+            signingConfig = signingConfigs.getByName("lightsdkDev")
+            // R8 keeps ported from the former :server library's
+            // consumerProguardFiles (JNA / Trixnity libolm). Generated into
+            // build/ rather than checked in as a .pro file: the Tool Library
+            // builder extracts only build.gradle.kts + lighttool.toml +
+            // src/main/{kotlin,java,res,assets} — a .pro at the tool root
+            // never reaches Light's pipeline.
+            proguardFile(chatsR8Rules)
         }
     }
 
@@ -46,27 +102,61 @@ android {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(rootProject.ext["jvmTarget"] as String))
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        // v5 Trixnity Room repositories declare their transaction-bound
+        // methods with Kotlin context parameters
+        // (context(ReadTransaction) / context(WriteTransaction)).
+        freeCompilerArgs.add("-Xcontext-parameters")
     }
 }
 
-// Never scans: drop the SDK's bundled QR scanner stack (needs compileSdk 37;
-// carries ~20 MB of native libs). Per-dependency excludes don't prune through
-// the composite-build project substitution, so drop the groups wholesale.
+// zxing-cpp (the SDK's camera QR/barcode decoder, added for Passes' bit-matrix
+// rendering) requires compileSdk 37; chats never scans codes. Per-dependency
+// excludes don't prune it through the composite-build project substitution,
+// so drop the group for the whole configuration.
 configurations.configureEach {
     exclude(group = "com.github.markusfisch")
-    exclude(group = "com.google.mlkit")
-    exclude(group = "androidx.camera")
 }
 
 // Inside an SDK checkout the SDK modules are sibling projects; in this
-// workspace the included ../light-phone/light-sdk build substitutes the module artifacts.
+// workspace the included ../light-sdk build substitutes the module artifacts.
 val inSdkRepo = file("../sdk").exists()
 
 dependencies {
-    implementation(
-        if (inSdkRepo) project(":sdk:client")
-        else "com.thelightphone:sdk-client"   // LightScreen, LightActivity
-    )
+    // SDK modules come from the included ../light-sdk build (see settings.gradle.kts).
+    // The QR scanner + CameraX come transitively via sdk:ui; the chat tool never scans codes.
+    if (inSdkRepo) {
+        implementation(project(":sdk:client")) {   // LightScreen, LightActivity, SealedLightContext
+            exclude(group = "com.google.mlkit")
+            exclude(group = "androidx.camera")
+        }
+    } else {
+        implementation("com.thelightphone:sdk-client") {
+            exclude(group = "com.google.mlkit")
+            exclude(group = "androidx.camera")
+        }
+    }
+
+    // The Matrix runtime, formerly the :server companion library (Rung-1
+    // fold, 2026-10): everything moved in-process behind the tool's
+    // SealedLightContext — no LightSdkService, no embedded server.
     implementation(libs.kotlinx.coroutines)
+
+    // Trixnity Matrix SDK (the protocol layer: login/sync, room repositories, media).
+    // Version pair proven by the Beeper4LightOS bootstrap on LightOS (see chats/PLAN.md).
+    // Literal coordinates, not catalog aliases: Light's builder extracts only
+    // tool/ and builds against the upstream SDK catalog, which has no
+    // trixnity aliases — but the dependency allowlist does (PR #274).
+    implementation("de.connect2x.trixnity:trixnity-client:5.8.0")
+    implementation("de.connect2x.trixnity:trixnity-client-repository-room:5.8.0")
+    implementation("de.connect2x.trixnity:trixnity-client-media-okio:5.8.0")
+    implementation("de.connect2x.trixnity:trixnity-client-cryptodriver-libolm:5.8.0") // libOlm driver — same pickle format as v4
+    implementation(libs.ktor.client.okhttp)
+    // Room runtime for Trixnity's TrixnityRoomDatabase (session + event store).
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+
+    // Unit tests for the pure-logic helpers (kotlin-test only — the
+    // workspace's only allowed test framework; junit is its backend).
+    testImplementation(libs.kotlin.test)
 }
