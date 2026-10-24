@@ -1,0 +1,10 @@
+[tool]
+id = "com.lightphone.rcsmessages"
+label = "RCS Messages"
+versionCode = 1
+versionName = "0.1.0"
+# Single-module tool (tasks/passes pattern): serverPackage = com.lightos on a
+# real LP3 (platform hosts the LightSdkService); flip to
+# com.thelightphone.sdk.emulator when testing on the emulator.
+serverPackage = "com.lightos"
+orientation = "portrait"

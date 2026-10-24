@@ -9,6 +9,17 @@ Status: **spec phase** — feasibility spec lives in the dev workspace
 from [fenleon/chats](https://github.com/fenleon/chats) (Kotlin, Light design
 system); the RCS client layer is new code.
 
+## Layout
+
+- `tool/` — the LightOS tool (single module, tasks/passes pattern:
+  `lighttool.toml` + `lighttool` plugin + LightScreen UI). Entry screen:
+  `HomeScreen.kt`. Builds against the sibling `light-phone/light-sdk` checkout
+  (included build); `serverPackage = "com.lightos"` on a real LP3, flip to
+  `com.thelightphone.sdk.emulator` for emulator testing. Build:
+  `./gradlew :tool:assembleDebug` (workspace JDK21/SDK env from
+  `light-phone/tools/env.sh`).
+- `probe/` — the C0 access-probe APK (standalone gradle project, not a tool).
+
 ## Locked decisions
 
 - Built-in **Phone** tool = React Native inside the `com.lightos` system app
