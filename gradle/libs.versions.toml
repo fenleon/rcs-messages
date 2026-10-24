@@ -17,4 +17,5 @@ sdk-shared = { module = "com.thelightphone:sdk-shared", version.ref = "sdk" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version = "2.3.6" }
 light-sdk = { id = "com.thelightphone.light-sdk" }
